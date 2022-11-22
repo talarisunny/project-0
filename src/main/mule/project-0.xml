@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="5fde7bd3-cee9-4acd-9f3d-674f6c99d6a4" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="dd0aaa32-aad0-4360-b394-89eb6aaba0c7" >
+		<http:request-connection host="training-american-ws.cloudhub.io" port="80" />
+	</http:request-config>
+	<flow name="project-0Flow" doc:id="ff50cad2-3eb2-4c68-b082-47bbd3db691b" >
+		<http:listener doc:name="Listener" doc:id="37c38a62-6d07-4e7f-b155-8e56c8909215" config-ref="HTTP_Listener_config" path="/cloud"/>
+		<logger level="INFO" doc:name="Logger" doc:id="66f161e9-4afc-4b6e-8d3e-51e50f38684d" message="incoming message ::#[payload]"/>
+		<flow-ref doc:name="Flow Reference" doc:id="309b290b-841e-4d7b-97b0-961e941d3eff" name="Sub_Flow" />
+		<ee:transform doc:name="Transform Message" doc:id="daf12e49-9acf-4e2e-8cab-13aae4aa103f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter $.destination == vars.dest]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<sub-flow name="Sub_Flow" doc:id="78cad6b1-5a1c-450e-be07-eca970e5bf6a" >
+		<set-variable value="#[payload.destination]" doc:name="Set Variable" doc:id="2ae620cf-dbfe-4e7e-9a22-b233f0491ee5" variableName="dest"/>
+		<http:request method="GET" doc:name="Request" doc:id="2e1ed153-7adc-4c3e-be45-3f30931f91bf" config-ref="HTTP_Request_configuration" url="http://training-american-ws.cloudhub.io/api/flights">
+			<http:body ><![CDATA[#[{
+	destination:vars.dest
+}]]]></http:body>
+		</http:request>
+	</sub-flow>
+</mule>
